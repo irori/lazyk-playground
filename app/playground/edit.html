@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lazy K Playground</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+  <script type="text/javascript" src="/static/playground.js"></script>
+</head>
+<body>
+<div id="banner">
+  <span id="head">Lazy K Playground</span>
+  <span id="controls">
+    <input id="run" type="button" value="Run">
+    <input id="stop" type="button" value="Stop" disabled>
+    <input id="save" type="button" value="Save">
+    <input type="text" id="shareURL">
+  </span>
+</div>
+<div class="block"><div>Code:</div><textarea id="program" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Program |html}}</textarea></div>
+<div class="block"><div>Input:</div><textarea id="input" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Input |html}}</textarea></div>
+<div class="block">
+  <div>Output:</div>
+  <pre id="output"></pre>
+  <div id="error"></div>
+</div>
+</body>
+</html>
