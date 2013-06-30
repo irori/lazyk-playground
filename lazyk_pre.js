@@ -1,3 +1,3 @@
 var Module = {
-  'TOTAL_MEMORY': 128*1024*1024,
+  'TOTAL_MEMORY': 64*1024*1024,
 };

@@ -13,8 +13,8 @@
 #include <ctype.h>
 #include <assert.h>
 
-#define INITIAL_HEAP_SIZE 128*1024
-#define RDSTACK_SIZE	100000
+#define HEAP_SIZE 3800000
+#define RDSTACK_SIZE	50000
 
 extern void output_char(int);
 extern void error(const char *);
@@ -78,8 +78,7 @@ typedef struct tagPair {
 #define COPIED		mkimm(1)
 #define UNUSED_MARKER	mkimm(2)
 
-Pair *heap_area, *free_ptr;
-int heap_size, next_heap_size;
+Pair *heap_area, *free_area, *free_ptr;
 
 void gc_run(Cell *save1, Cell *save2);
 void rs_copy(void);
@@ -98,17 +97,16 @@ void errexit(char *fmt, ...)
     exit(1);
 }
 
-void storage_init(int size)
+void storage_init()
 {
-    heap_size = size;
-    heap_area = malloc(sizeof(Pair) * heap_size);
+    heap_area = malloc(sizeof(Pair) * HEAP_SIZE * 2);
     if (heap_area == NULL)
-	errexit("Cannot allocate heap storage (%d cells)\n", heap_size);
+	errexit("Cannot allocate heap storage (%d cells)\n", HEAP_SIZE);
     assert(((int)heap_area & 3) == 0 && (sizeof(Pair) & 3) == 0);
     
     free_ptr = heap_area;
-    heap_area += heap_size;
-    next_heap_size = heap_size * 3 / 2;
+    heap_area += HEAP_SIZE;
+    free_area = heap_area;
 }
 
 Cell pair(Cell fst, Cell snd)
@@ -139,20 +137,12 @@ Cell alloc(int n)
 
 void gc_run(Cell *save1, Cell *save2)
 {
-    static Pair* free_area = NULL;
     int num_alive;
     Pair *scan;
 
-    if (free_area == NULL) {
-	free_area = malloc(sizeof(Pair) * next_heap_size);
-	if (free_area == NULL)
-	    errexit("Cannot allocate heap storage (%d cells)\n",
-		    next_heap_size);
-    }
-
     free_ptr = scan = free_area;
-    free_area = heap_area - heap_size;
-    heap_area = free_ptr + next_heap_size;
+    free_area = heap_area - HEAP_SIZE;
+    heap_area = free_ptr + HEAP_SIZE;
 
     rs_copy();
     if (save1)
@@ -166,16 +156,10 @@ void gc_run(Cell *save1, Cell *save2)
 	scan++;
     }
 
-    num_alive = free_ptr - (heap_area - next_heap_size);
+    num_alive = free_ptr - (heap_area - HEAP_SIZE);
 
-    if (heap_size != next_heap_size || num_alive * 8 > next_heap_size) {
-	heap_size = next_heap_size;
-	if (num_alive * 8 > next_heap_size)
-	    next_heap_size = num_alive * 8;
-
-	free(free_area);
-	free_area = NULL;
-    }
+    if (num_alive * 9 / 10 > HEAP_SIZE)
+	errexit("out of memory");
 }
 
 Cell copy_cell(Cell c)
@@ -472,7 +456,7 @@ void eval_program(const char *program, const char *input)
     Cell root;
     char *prog_file = NULL;
     
-    storage_init(INITIAL_HEAP_SIZE);
+    storage_init();
     rs_init();
 
     g_input = program;
