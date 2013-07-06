@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <setjmp.h>
 #include <ctype.h>
 #include <assert.h>
 
@@ -78,11 +79,13 @@ typedef struct tagPair {
 #define COPIED		mkimm(1)
 #define UNUSED_MARKER	mkimm(2)
 
-Pair *heap_area, *free_area, *free_ptr;
+Pair *heap_top, *heap_area, *free_area, *free_ptr;
 
 void gc_run(Cell *save1, Cell *save2);
 void rs_copy(void);
 Cell copy_cell(Cell c);
+
+jmp_buf jbuf;
 
 void errexit(char *fmt, ...)
 {
@@ -94,19 +97,20 @@ void errexit(char *fmt, ...)
 
     error(buf);
 
-    exit(1);
+    longjmp(jbuf, 1);
 }
 
 void storage_init()
 {
-    heap_area = malloc(sizeof(Pair) * HEAP_SIZE * 2);
-    if (heap_area == NULL)
-	errexit("Cannot allocate heap storage (%d cells)\n", HEAP_SIZE);
-    assert(((int)heap_area & 3) == 0 && (sizeof(Pair) & 3) == 0);
+    if (!heap_top) {
+	heap_top = malloc(sizeof(Pair) * HEAP_SIZE * 2);
+	if (!heap_top)
+	    errexit("Cannot allocate heap storage (%d cells)\n", HEAP_SIZE);
+	assert(((int)heap_area & 3) == 0 && (sizeof(Pair) & 3) == 0);
+    }
     
-    free_ptr = heap_area;
-    heap_area += HEAP_SIZE;
-    free_area = heap_area;
+    free_ptr = heap_top;
+    free_area = heap_area = heap_top + HEAP_SIZE;
 }
 
 Cell pair(Cell fst, Cell snd)
@@ -200,7 +204,11 @@ RdStack rd_stack;
 void rs_init(void)
 {
     int i;
-    rd_stack.stack = (Cell *)malloc(sizeof(Cell) * RDSTACK_SIZE);
+    if (!rd_stack.stack) {
+	rd_stack.stack = (Cell *)malloc(sizeof(Cell) * RDSTACK_SIZE);
+	if (!rd_stack.stack)
+	    errexit("cannot allocate reduction stack");
+    }
     rd_stack.sp = rd_stack.stack + RDSTACK_SIZE;
 
     for (i = 0; i < RDSTACK_SIZE; i++)
@@ -453,17 +461,17 @@ void eval_print(Cell root)
 
 void eval_program(const char *program, const char *input)
 {
-    Cell root;
-    char *prog_file = NULL;
+    if (!setjmp(jbuf)) {
+	Cell root;
+	char *prog_file = NULL;
     
-    storage_init();
-    rs_init();
+	storage_init();
+	rs_init();
 
-    g_input = program;
-    root = load_program();
+	g_input = program;
+	root = load_program();
 
-    g_input = input;
-    eval_print(root);
-
-    // free
+	g_input = input;
+	eval_print(root);
+    }
 }

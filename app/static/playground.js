@@ -11,19 +11,21 @@ $(function() {
       break;
     case 'error':
       $('#error').text("error: " + e.data.message);
+      break;
+    case 'stopped':
       setRunningState(true);
       break;
     case 'terminate':
       setRunningState(true);
+      worker.terminate();
+      worker = null;
       break;
     }
   }
 
   function setRunningState(running) {
-    $('#run').disabled = !running;
-    $('#stop').disabled = running;
-    $('#program').readOnly = !running;
-    $('#input').readOnly = !running;
+    $('#run').attr('disabled', !running);
+    $('#stop').attr('disabled', running);
   }
 
   function formData() {
@@ -36,13 +38,13 @@ $(function() {
 
   $('#run').click(function() {
     setRunningState(false);
-    if (worker)
-      worker.terminate();
-    worker = new Worker('/static/lazyk.js');
-    worker.addEventListener('message', handleWorkerMessage);
+    if (!worker) {
+      worker = new Worker('/static/lazyk.js');
+      worker.addEventListener('message', handleWorkerMessage);
+    }
 
-    $('#output').textContent = null;
-    $('#error').textContent = null;
+    $('#output').val('');
+    $('#error').text('');
 
     worker.postMessage(formData());
   });
