@@ -463,7 +463,6 @@ void eval_program(const char *program, const char *input)
 {
     if (!setjmp(jbuf)) {
 	Cell root;
-	char *prog_file = NULL;
     
 	storage_init();
 	rs_init();
@@ -474,4 +473,18 @@ void eval_program(const char *program, const char *input)
 	g_input = (const unsigned char *)input;
 	eval_print(root);
     }
+}
+
+int is_valid_program(const char *program)
+{
+    if (!setjmp(jbuf)) {
+	storage_init();
+	rs_init();
+
+	g_input = (const unsigned char *)program;
+	load_program();
+    } else {
+	return 0;
+    }
+    return 1;
 }

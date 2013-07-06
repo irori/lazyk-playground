@@ -1,6 +1,7 @@
 $(function() {
   var worker;
   var outputElem = $('#output');
+  var dataToSave = null;
 
   $('#shareURL').hide();
 
@@ -10,7 +11,7 @@ $(function() {
       outputElem.val(outputElem.val() + e.data.ch);
       break;
     case 'error':
-      $('#error').text("error: " + e.data.message);
+      $('#error').text(e.data.message);
       break;
     case 'stopped':
       setRunningState(true);
@@ -20,6 +21,22 @@ $(function() {
       worker.terminate();
       worker = null;
       break;
+    case 'validated':
+      if (e.data.ok && !dataToSave.program.match(/^(\s|#.*\n)*$/))
+	submitCode();
+      else {
+	alert("Enter a non-empty, valid Lazy K program.");
+	dataToSave = null;
+	$('#save').attr('disabled', false);
+      }
+      break;
+    }
+  }
+
+  function initWorker() {
+    if (!worker) {
+      worker = new Worker('/static/lazyk.js');
+      worker.addEventListener('message', handleWorkerMessage);
     }
   }
 
@@ -36,17 +53,34 @@ $(function() {
     return (""+href).split("/").slice(0, 3).join("/");
   }
 
+  function submitCode() {
+    $.ajax("/save", {
+      processData: false,
+      contentType: 'application/json',
+      data: JSON.stringify(dataToSave),
+      type: "POST",
+    }).done(function(body) {
+      var path = "/p/" + body;
+      var url = origin(window.location) + path;
+      $('#shareURL').show().val(url).focus().select();
+    }).fail(function() {
+      alert("Server error; try again.");
+    }).always(function() {
+      dataToSave = null;
+      $('#save').attr('disabled', false);
+    });
+  }
+
   $('#run').click(function() {
     setRunningState(false);
-    if (!worker) {
-      worker = new Worker('/static/lazyk.js');
-      worker.addEventListener('message', handleWorkerMessage);
-    }
+    initWorker();
 
     $('#output').val('');
     $('#error').text('');
 
-    worker.postMessage(formData());
+    msg = formData();
+    msg['cmd'] = 'eval';
+    worker.postMessage(msg);
   });
 
   $('#stop').click(function() {
@@ -57,26 +91,14 @@ $(function() {
     setRunningState(true);
   });
 
-  var saving = false;
   $('#save').click(function() {
-    if (saving)
+    if (dataToSave)
       return;
-    saving = true;
+    dataToSave = formData();
     $('#shareURL').hide();
-    var data = formData();
-    $.ajax("/save", {
-      processData: false,
-      contentType: 'application/json',
-      data: JSON.stringify(data),
-      type: "POST",
-    }).done(function(data) {
-      var path = "/p/" + data;
-      var url = origin(window.location) + path;
-      $('#shareURL').show().val(url).focus().select();
-    }).fail(function() {
-      alert("Server error; try again.");
-    }).always(function() {
-      saving = false;
-    });
+    $('#save').attr('disabled', true);
+
+    initWorker();
+    worker.postMessage({'cmd': 'validate', 'program': dataToSave.program});
   });
 });
