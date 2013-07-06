@@ -13,6 +13,7 @@ import (
 )
 
 const salt = "[replace this with something unique]"
+const maxInputLength = 100*1024
 
 type Snippet struct {
 	Code []byte
@@ -70,6 +71,10 @@ func save(w http.ResponseWriter, r *http.Request) {
 
 	snip := data.ToSnippet()
 
+	if len(snip.Code) > maxInputLength || len(snip.Input) > maxInputLength {
+		http.Error(w, "Too long", http.StatusBadRequest)
+		return
+	}
 	if !isValidCode(snip.Code) {
 		http.Error(w, "Invalid Lazy K code", http.StatusBadRequest)
 		return
