@@ -8,7 +8,7 @@
 </head>
 <body>
 <div id="banner">
-  <span id="head">Lazy K Playground</span>
+  <a id="head" href="/">Lazy K Playground</a>
   <span id="controls">
     <input id="run" type="button" value="Run">
     <input id="stop" type="button" value="Stop" disabled>
@@ -16,11 +16,11 @@
     <input type="text" id="shareURL">
   </span>
 </div>
-<div class="block"><div>Code:</div><textarea id="program" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Program |html}}</textarea></div>
-<div class="block"><div>Input:</div><textarea id="input" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Input |html}}</textarea></div>
+<div class="block"><div class="caption">Code</div><textarea id="program" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Program |html}}</textarea></div>
+<div class="block"><div class="caption">Input</div><textarea id="input" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Input |html}}</textarea></div>
 <div class="block">
-  <div>Output:</div>
-  <pre id="output"></pre>
+  <div class="caption">Output</div>
+  <textarea id="output" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false" readonly></textarea>
   <div id="error"></div>
 </div>
 </body>
