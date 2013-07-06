@@ -35,6 +35,8 @@ $(function() {
 
   function initWorker() {
     if (!worker) {
+      if (typeof(Worker) == "undefined")
+	alert('Sorry, this browser is not supported.');
       worker = new Worker('/static/lazyk.js');
       worker.addEventListener('message', handleWorkerMessage);
     }
