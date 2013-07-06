@@ -14,19 +14,31 @@ import (
 const salt = "[replace this with something unique]"
 
 type Snippet struct {
-	Program string
-	Input string
+	Code []byte
+	Input []byte
 }
 
 func (s *Snippet) Id() string {
 	h := sha1.New()
-	io.WriteString(h, s.Program)
+	h.Write(s.Code)
 	io.WriteString(h, salt)
-	io.WriteString(h, s.Input)
+	h.Write(s.Input)
 	sum := h.Sum(nil)
 	b := make([]byte, base64.URLEncoding.EncodedLen(len(sum)))
 	base64.URLEncoding.Encode(b, sum)
 	return string(b)[:10]
+}
+
+type PostData struct {
+	Program string
+	Input string
+}
+
+func (data *PostData) ToSnippet() *Snippet {
+	return &Snippet{
+		Code: []byte(data.Program),
+		Input: []byte(data.Input),
+	}
 }
 
 func init() {
@@ -40,9 +52,9 @@ func save(w http.ResponseWriter, r *http.Request) {
 	}
 	c := appengine.NewContext(r)
 
-	var snip Snippet
+	var data PostData
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&snip)
+	err := decoder.Decode(&data)
 	if err != nil {
 		c.Errorf("reading Body: %v", err)
 		http.Error(w, "Server Error", http.StatusInternalServerError)
@@ -50,9 +62,11 @@ func save(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
+	snip := data.ToSnippet()
+
 	id := snip.Id()
 	key := datastore.NewKey(c, "Snippet", id, 0, nil)
-	_, err = datastore.Put(c, key, &snip)
+	_, err = datastore.Put(c, key, snip)
 	if err != nil {
 		c.Errorf("putting Snippet: %v", err)
 		http.Error(w, "Server Error", http.StatusInternalServerError)
