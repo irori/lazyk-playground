@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 )
 
 const salt = "[replace this with something unique]"
@@ -41,6 +42,11 @@ func (data *PostData) ToSnippet() *Snippet {
 	}
 }
 
+func isValidCode(code []byte) bool {
+	stripped := regexp.MustCompile(`\s|#.*\n`).ReplaceAll(code, []byte{})
+	return regexp.MustCompile("^[`*()skiSKI01]+$").Match(stripped)
+}
+
 func init() {
 	http.HandleFunc("/save", save)
 }
@@ -63,6 +69,11 @@ func save(w http.ResponseWriter, r *http.Request) {
 	r.Body.Close()
 
 	snip := data.ToSnippet()
+
+	if !isValidCode(snip.Code) {
+		http.Error(w, "Invalid Lazy K code", http.StatusBadRequest)
+		return
+	}
 
 	id := snip.Id()
 	key := datastore.NewKey(c, "Snippet", id, 0, nil)
