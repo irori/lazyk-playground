@@ -251,7 +251,7 @@ void rs_push(Cell c)
  *  Loader
  **********************************************************************/
 
-const char *g_input;
+const unsigned char *g_input;
 
 Cell read_one(int i_is_iota);
 Cell read_many(char closing_char);
@@ -468,10 +468,10 @@ void eval_program(const char *program, const char *input)
 	storage_init();
 	rs_init();
 
-	g_input = program;
+	g_input = (const unsigned char *)program;
 	root = load_program();
 
-	g_input = input;
+	g_input = (const unsigned char *)input;
 	eval_print(root);
     }
 }

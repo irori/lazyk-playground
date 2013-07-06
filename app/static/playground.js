@@ -7,7 +7,7 @@ $(function() {
   function handleWorkerMessage(e) {
     switch (e.data.cmd) {
     case 'putc':
-      outputElem.val(outputElem.val() + String.fromCharCode(e.data.ch));
+      outputElem.val(outputElem.val() + e.data.ch);
       break;
     case 'error':
       $('#error').text("error: " + e.data.message);
