@@ -14,10 +14,11 @@ $(function() {
       $('#error').text(e.data.message);
       break;
     case 'stopped':
-      setRunningState(true);
+      setRunningState(false);
+      console.log('elapsed time: ' + e.data.elapsed + 'sec.');
       break;
     case 'terminate':
-      setRunningState(true);
+      setRunningState(false);
       worker.terminate();
       worker = null;
       break;
@@ -43,8 +44,8 @@ $(function() {
   }
 
   function setRunningState(running) {
-    $('#run').attr('disabled', !running);
-    $('#stop').attr('disabled', running);
+    $('#run').attr('disabled', running);
+    $('#stop').attr('disabled', !running);
   }
 
   function formData() {
@@ -74,7 +75,7 @@ $(function() {
   }
 
   $('#run').click(function() {
-    setRunningState(false);
+    setRunningState(true);
     initWorker();
 
     $('#output').val('');
@@ -90,7 +91,7 @@ $(function() {
       worker.terminate();
       worker = null;
     }
-    setRunningState(true);
+    setRunningState(false);
   });
 
   $('#save').click(function() {

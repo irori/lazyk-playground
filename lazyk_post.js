@@ -7,8 +7,10 @@ addEventListener('message', function(e) {
     switch (e.data.cmd) {
     case 'eval':
       output_utf8 = new Runtime.UTF8Processor();
+      var start = Date.now();
       eval_program(e.data.program, e.data.input);
-      postMessage({'cmd': 'stopped'});
+      var elapsed = (Date.now() - start) / 1000;
+      postMessage({'cmd': 'stopped', 'elapsed': elapsed});
       break;
     case 'validate':
       var result = is_valid_program(e.data.program);
