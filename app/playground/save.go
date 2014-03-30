@@ -13,7 +13,7 @@ import (
 )
 
 const salt = "[replace this with something unique]"
-const maxInputLength = 100*1024
+const maxInputLength = 300*1024
 
 type Snippet struct {
 	Code []byte
