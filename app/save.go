@@ -1,13 +1,14 @@
-package playground
+package main
 
 import (
-	"appengine"
-	"appengine/datastore"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -48,10 +49,6 @@ func isValidCode(code []byte) bool {
 	return regexp.MustCompile("^[`*()skiSKI01]+$").Match(stripped)
 }
 
-func init() {
-	http.HandleFunc("/save", save)
-}
-
 func save(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -63,7 +60,7 @@ func save(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&data)
 	if err != nil {
-		c.Errorf("reading Body: %v", err)
+		log.Printf("reading Body: %v", err)
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -84,7 +81,7 @@ func save(w http.ResponseWriter, r *http.Request) {
 	key := datastore.NewKey(c, "Snippet", id, 0, nil)
 	_, err = datastore.Put(c, key, snip)
 	if err != nil {
-		c.Errorf("putting Snippet: %v", err)
+		log.Printf("putting Snippet: %v", err)
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 		return
 	}
